@@ -14,10 +14,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Install dependencies
+      - uses: actions/checkout@v4
+      - name: Run prometheus
         run: |
           docker run -p 9090:9090 -v ./tests/prometheus.yml:/etc/prometheus/prometheus.yml prom/prometheus --web.enable-otlp-receiver --config.file=/etc/prometheus/prometheus.yml
-      - uses: actions/checkout@v4
       - uses: actions/cache@v4
         with:
           path: |
