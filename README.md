@@ -28,5 +28,3 @@ let response = send_metrics(&config, recorder.to_json().as_bytes())?;
 // send metrics every 15 seconds
 send_metrics_with_interval(config, Duration::from_secs(15), recorder);
 ```
-
-src/lib.rs
