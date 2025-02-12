@@ -16,7 +16,7 @@ jobs:
     steps:
       - name: Install dependencies
         run: |
-          docker run -p 9090:9090 -v $(pwd)/tests/prometheus.yml:/etc/prometheus/prometheus.yml prom/prometheus --web.enable-otlp-receiver --config.file=/etc/prometheus/prometheus.yml
+          docker run -p 9090:9090 -v ./tests/prometheus.yml:/etc/prometheus/prometheus.yml prom/prometheus --web.enable-otlp-receiver --config.file=/etc/prometheus/prometheus.yml
       - uses: actions/checkout@v4
       - uses: actions/cache@v4
         with:
