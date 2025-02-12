@@ -1,0 +1,9 @@
+[package]
+name = "otlp-metrics"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+json = "0.12"
+metrics = "0.24"
+tracing = "0.1"
