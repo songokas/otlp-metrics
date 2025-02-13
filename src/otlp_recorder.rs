@@ -1,4 +1,7 @@
-use std::sync::{Arc, Mutex};
+use std::{
+    sync::{Arc, Mutex},
+    vec,
+};
 
 use metrics::{Counter, Gauge, Histogram, Key, KeyName, Metadata, Recorder, SharedString, Unit};
 
@@ -120,16 +123,34 @@ impl Recorder for OtlpRecorder {
 
         self.add_metric(key.clone(), metric);
 
-        Gauge::from_arc(Arc::new(value))
+        Gauge::from_arc(value)
     }
 
     fn register_histogram(&self, key: &Key, _metadata: &Metadata<'_>) -> Histogram {
         return_existing_metric!(self, key, Histogram);
 
-        let value = Arc::new(HistogramValue::default());
+        let key = key.clone();
+
+        let bounds = if let Some(buckets) = key
+            .labels()
+            .find_map(|l| (l.key() == "buckets").then_some(l.value()))
+        {
+            buckets
+                .split(',')
+                .map(|v| {
+                    v.trim()
+                        .parse()
+                        .unwrap_or_else(|_| panic!("Invalid value for bucket provided {v}"))
+                })
+                .collect()
+        } else {
+            vec![]
+        };
+
+        let value = Arc::new(HistogramValue::from_bounds(bounds));
         let metric = MetricData::basic(MetricType::Histogram(value.clone()));
 
-        self.add_metric(key.clone(), metric);
+        self.add_metric(key, metric);
 
         Histogram::from_arc(value)
     }

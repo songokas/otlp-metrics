@@ -31,4 +31,4 @@ jobs:
         run: |
           cargo fmt --check
           cargo clippy
-          cargo test -- --test-threads=1
+          cargo test

@@ -13,7 +13,7 @@ let recorder = install_recorder(env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"
 
 counter!("test_counter", "label1" => "label_value1").increment(1);
 gauge!("test_gauge", "label2" => "label_value2").set(10);
-histogram!("test_histogram", "label3" => "label_value3").record(10);
+histogram!("test_histogram", "buckets" => "10,30").record(10);
 
 let config = TransportConfig {
    remote_addr: "127.0.0.1:9090".to_string(),

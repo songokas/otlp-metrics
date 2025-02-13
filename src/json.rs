@@ -82,7 +82,9 @@ fn histogram(key: &Key, data: &MetricData, value: &HistogramValue) -> JsonValue 
                     "timeUnixNano": value.time(),
                     "count": value.count(),
                     "sum": value.sum(),
-                    "attributes": key.labels().map(|l| attr(l.key(), l.value())).collect::<Vec<_>>()
+                    "attributes": key.labels().map(|l| attr(l.key(), l.value())).collect::<Vec<_>>(),
+                    "bucketCounts": value.bucket_count(),
+                    "explicitBounds": value.explicit_bounds(),
                 }
             ]
         }

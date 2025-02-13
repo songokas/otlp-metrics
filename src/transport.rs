@@ -3,7 +3,7 @@ use std::{
     io::{self, Read, Result, Write},
     net::{TcpStream, ToSocketAddrs},
     sync::Arc,
-    thread::{sleep, spawn},
+    thread::{sleep, spawn, JoinHandle},
 };
 
 use tracing::error;
@@ -92,27 +92,26 @@ pub fn send_metrics_with_interval(
     config: TransportConfig,
     interval: Duration,
     recorder: Arc<OtlpRecorder>,
-) {
+) -> JoinHandle<()>{
     spawn(move || loop {
         sleep(interval);
         if let Err(e) = send_metrics(&config, recorder.to_json().as_bytes()) {
             error!("Error sending metrics {e}");
         }
-    });
+    })
 }
 
 #[cfg(test)]
 mod tests {
     use metrics::{counter, gauge, histogram};
 
-    use crate::{install_recorder, time::set_time};
+    use crate::install_recorder;
 
     use super::*;
 
     // docker run -p 9090:9090 -v $(pwd)/tests/prometheus.yml:/etc/prometheus/prometheus.yml prom/prometheus --web.enable-otlp-receiver --config.file=/etc/prometheus/prometheus.yml
     #[test]
     fn test_send_metrics() {
-        set_time(0);
         sleep(Duration::from_millis(1000));
         let recorder = install_recorder("otlp-metrics", "0.1.0");
         for _ in 0..3 {

@@ -144,9 +144,25 @@ pub struct HistogramValue {
     pub sum: AtomicU64,
     pub count: AtomicU64,
     pub time: AtomicU64,
+    pub explicit_bounds: Vec<f64>,
+    pub bucket_count: Vec<AtomicU64>,
 }
 
 impl HistogramValue {
+    pub fn from_bounds(bounds: Vec<f64>) -> Self {
+        let mut value = Self::default();
+        if !bounds.is_empty() {
+            value.explicit_bounds = bounds;
+            value.bucket_count = value
+                .explicit_bounds
+                .iter()
+                .map(|_| AtomicU64::new(0))
+                .collect();
+            value.bucket_count.push(AtomicU64::new(0));
+        }
+        value
+    }
+
     pub fn sum(&self) -> f64 {
         f64::from_bits(self.sum.load(Ordering::Relaxed))
     }
@@ -157,6 +173,17 @@ impl HistogramValue {
 
     pub fn time(&self) -> u64 {
         self.time.load(Ordering::Relaxed)
+    }
+
+    pub fn bucket_count(&self) -> Vec<u64> {
+        self.bucket_count
+            .iter()
+            .map(|v| v.load(Ordering::Relaxed))
+            .collect()
+    }
+
+    pub fn explicit_bounds(&self) -> &[f64] {
+        &self.explicit_bounds
     }
 }
 
@@ -176,7 +203,79 @@ impl HistogramFn for HistogramValue {
             }
         }
 
+        if !self.explicit_bounds.is_empty() {
+            let mut bounds = self.explicit_bounds.iter();
+            let mut buckets = self.bucket_count.iter();
+            let mut prev_bound = bounds.next().expect("At least one bound");
+            let bucket = buckets.next().expect("At least one bucket");
+            if &value <= prev_bound {
+                let _ = bucket.fetch_add(1, Ordering::Release);
+            }
+            loop {
+                let bound = bounds.next();
+                let bucket = buckets.next();
+                if let Some(b) = bound {
+                    if &value > prev_bound && &value <= b {
+                        let _ = bucket
+                            .expect("At least one bound")
+                            .fetch_add(1, Ordering::Release);
+                    }
+                    prev_bound = b;
+                } else {
+                    if &value > prev_bound {
+                        let _ = bucket
+                            .expect("At least one bound")
+                            .fetch_add(1, Ordering::Release);
+                    }
+                    break;
+                }
+            }
+        }
+
         let _ = self.count.fetch_add(1, Ordering::Release);
         let _ = self.time.swap(current_time(), Ordering::AcqRel);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_histogram_bounds() {
+        let histogram = HistogramValue::from_bounds(vec![1.0, 2.0, 100.0]);
+        histogram.record(-1.0);
+        assert_eq!(histogram.bucket_count(), vec![1, 0, 0, 0]);
+        histogram.record(1.0);
+        assert_eq!(histogram.bucket_count(), vec![2, 0, 0, 0]);
+        histogram.record(1.5);
+        assert_eq!(histogram.bucket_count(), vec![2, 1, 0, 0]);
+        histogram.record(2.5);
+        assert_eq!(histogram.bucket_count(), vec![2, 1, 1, 0]);
+        histogram.record(100.0);
+        assert_eq!(histogram.bucket_count(), vec![2, 1, 2, 0]);
+        histogram.record(1000.0);
+        assert_eq!(histogram.bucket_count(), vec![2, 1, 2, 1]);
+
+        assert_eq!(histogram.count(), 6);
+        assert_eq!(histogram.sum(), 1104.0);
+    }
+
+    #[test]
+    fn test_gauge() {
+        let value = GaugeValue::default();
+        value.set(-10.0);
+        assert_eq!(value.value(), -10.0);
+        value.set(10.0);
+        assert_eq!(value.value(), 10.0);
+    }
+
+    #[test]
+    fn test_counter() {
+        let value = CounterValue::default();
+        value.increment(1);
+        assert_eq!(value.value(), 1);
+        value.increment(100);
+        assert_eq!(value.value(), 101);
     }
 }
