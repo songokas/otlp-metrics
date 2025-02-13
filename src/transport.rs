@@ -92,7 +92,7 @@ pub fn send_metrics_with_interval(
     config: TransportConfig,
     interval: Duration,
     recorder: Arc<OtlpRecorder>,
-) -> JoinHandle<()>{
+) -> JoinHandle<()> {
     spawn(move || loop {
         sleep(interval);
         if let Err(e) = send_metrics(&config, recorder.to_json().as_bytes()) {
