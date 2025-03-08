@@ -95,7 +95,7 @@ pub fn send_metrics_with_interval(
 ) -> JoinHandle<()> {
     spawn(move || loop {
         sleep(interval);
-        if let Err(e) = send_metrics(&config, recorder.to_json().as_bytes()) {
+        if let Err(e) = send_metrics(&config, recorder.to_json(None).as_bytes()) {
             error!("Error sending metrics {e}");
         }
     })
@@ -113,7 +113,7 @@ mod tests {
     #[test]
     fn test_send_metrics() {
         sleep(Duration::from_millis(1000));
-        let recorder = install_recorder("otlp-metrics", "0.1.0");
+        let recorder = install_recorder("otlp-metrics", "0.1.0", "test");
         for _ in 0..3 {
             counter!("test_counter", "label1" => "label_value1").increment(1);
             gauge!("test_gauge", "label2" => "label_value2").set(10);
@@ -125,7 +125,7 @@ mod tests {
             headers: vec![("Authorization".to_string(), "Basic ame".to_string())],
             timeout: Duration::from_secs(5),
         };
-        let response = send_metrics(&config, recorder.to_json().as_bytes()).unwrap();
+        let response = send_metrics(&config, recorder.to_json(None).as_bytes()).unwrap();
         assert!(String::from_utf8(response)
             .unwrap()
             .contains("HTTP/1.1 200 OK"));
@@ -134,7 +134,7 @@ mod tests {
             gauge!("test_gauge", "label2" => "label_value2").set(10);
             histogram!("test_histogram", "label3" => "label_value3").record(10);
         }
-        let response = send_metrics(&config, recorder.to_json().as_bytes()).unwrap();
+        let response = send_metrics(&config, recorder.to_json(None).as_bytes()).unwrap();
         assert!(String::from_utf8(response)
             .unwrap()
             .contains("HTTP/1.1 200 OK"));

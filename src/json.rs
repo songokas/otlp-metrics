@@ -1,21 +1,26 @@
 use json::{object, JsonValue};
 use metrics::Key;
 
-use crate::metric::{
-    CounterValue, GaugeValue, HistogramValue, MetricData, MetricType, MetricValues,
-};
+use crate::metric::{CounterValue, GaugeValue, HistogramValue, MetricData, MetricType};
 
-pub fn metrics_to_json(name: &str, version: &str, values: &MetricValues) -> String {
-    let value = root(name, version, values);
+pub fn metrics_to_json(
+    name: &str,
+    version: &str,
+    instance_id: &str,
+    values: &[&(Key, MetricData)],
+) -> String {
+    let value = root(name, version, instance_id, values);
     json::stringify(value)
 }
 
-fn root(name: &str, version: &str, values: &MetricValues) -> JsonValue {
+fn root(name: &str, version: &str, instance_id: &str, values: &[&(Key, MetricData)]) -> JsonValue {
     object! {
         "resourceMetrics": [{
             "resource": {
                 "attributes": [
-                    attr(name, version)
+                    attr("service.name", name),
+                    attr("service.version", version),
+                    attr("service.instance.id", instance_id),
                 ]
             },
             "scopeMetrics": [{

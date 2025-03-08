@@ -1,3 +1,4 @@
+use core::time::Duration;
 use std::{
     sync::{Arc, Mutex},
     vec,
@@ -11,6 +12,7 @@ use crate::{
         CounterValue, GaugeValue, HistogramValue, MetricData, MetricDescription, MetricType,
         MetricValues,
     },
+    time::current_time,
 };
 
 macro_rules! return_existing_metric {
@@ -35,25 +37,42 @@ macro_rules! return_existing_metric {
 pub struct OtlpRecorder {
     name: String,
     version: String,
+    instance_id: String,
     metrics: Mutex<MetricValues>,
     descriptions: Mutex<Vec<MetricDescription>>,
 }
 
 impl OtlpRecorder {
-    pub fn new(name: impl ToString, version: impl ToString) -> Self {
+    pub fn new(name: impl ToString, version: impl ToString, instance_id: impl ToString) -> Self {
         Self {
             name: name.to_string(),
             version: version.to_string(),
+            instance_id: instance_id.to_string(),
             metrics: Default::default(),
             descriptions: Default::default(),
         }
     }
 
-    pub fn to_json(&self) -> String {
+    pub fn to_json(&self, period: Option<Duration>) -> String {
+        let metrics = self.metrics.lock().expect("metrics lock");
+
+        let metrics_to_output: Vec<&(Key, MetricData)> = if let Some(p) = period {
+            metrics
+                .iter()
+                .filter(|(_, m)| match &m.metric_type {
+                    MetricType::Counter(v) => current_time() - v.time() <= p.as_nanos() as u64,
+                    MetricType::Gauge(v) => current_time() - v.time() <= p.as_nanos() as u64,
+                    MetricType::Histogram(v) => current_time() - v.time() <= p.as_nanos() as u64,
+                })
+                .collect()
+        } else {
+            metrics.iter().collect::<Vec<&(Key, MetricData)>>()
+        };
         json::metrics_to_json(
             &self.name,
             &self.version,
-            &self.metrics.lock().expect("metrics lock"),
+            &self.instance_id,
+            metrics_to_output.as_slice(),
         )
     }
 
