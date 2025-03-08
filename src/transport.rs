@@ -27,7 +27,7 @@ pub struct TransportConfig {
 /// use otlp_metrics::transport::{TransportConfig, send_metrics};
 /// use metrics::{counter, gauge, histogram};
 ///
-/// let recorder = install_recorder(env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
+/// let recorder = install_recorder(env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"), "instance1");
 /// counter!("test_counter", "label1" => "label_value1").increment(1);
 /// let config = TransportConfig {
 ///    remote_addr: "127.0.0.1:9090".to_string(),
@@ -35,7 +35,7 @@ pub struct TransportConfig {
 ///    headers: vec![("Authorization".to_string(), "Basic ame".to_string())],
 ///    timeout: Duration::from_secs(5),
 /// };
-/// let response = send_metrics(&config, recorder.to_json().as_bytes()).unwrap();
+/// let response = send_metrics(&config, recorder.to_json(None).as_bytes()).unwrap();
 /// ```
 pub fn send_metrics(config: &TransportConfig, metrics: &[u8]) -> Result<Vec<u8>> {
     let TransportConfig {
@@ -78,7 +78,7 @@ pub fn send_metrics(config: &TransportConfig, metrics: &[u8]) -> Result<Vec<u8>>
 /// use otlp_metrics::transport::{TransportConfig, send_metrics_with_interval};
 /// use metrics::{counter, gauge, histogram};
 ///
-/// let recorder = install_recorder(env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
+/// let recorder = install_recorder(env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"), "instance1");
 /// counter!("test_counter", "label1" => "label_value1").increment(1);
 /// let config = TransportConfig {
 ///    remote_addr: "127.0.0.1:9090".to_string(),
