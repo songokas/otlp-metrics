@@ -9,7 +9,7 @@ use otlp_metrics_exporter::install_recorder;
 use metrics::{counter, gauge, histogram};
 use otlp_metrics_exporter::transport::{TransportConfig, send_metrics, send_metrics_with_interval};
 
-let recorder = install_recorder(env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
+let recorder = install_recorder(env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"), "instance_name");
 
 counter!("test_counter", "label1" => "label_value1").increment(1);
 gauge!("test_gauge", "label2" => "label_value2").set(10);
@@ -25,6 +25,6 @@ let config = TransportConfig {
 // send metrics manually
 let response = send_metrics(&config, recorder.to_json(Duration::from_secs(600).into()).as_bytes())?;
 
-// send metrics every 15 seconds
+// send metrics every 15 seconds for 15 second period
 send_metrics_with_interval(config, Duration::from_secs(15), recorder);
 ```
