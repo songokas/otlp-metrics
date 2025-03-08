@@ -1,13 +1,13 @@
 # About
 
-Simple opentelemetry metrics exporter as json
+Simple/no dependency opentelemetry metrics exporter as json for metrics crate
 
 # Howto
 
 ```rust
-use otlp_metrics::install_recorder;
+use otlp_metrics_exporter::install_recorder;
 use metrics::{counter, gauge, histogram};
-use otlp_metrics::transport::{TransportConfig, send_metrics, send_metrics_with_interval};
+use otlp_metrics_exporter::transport::{TransportConfig, send_metrics, send_metrics_with_interval};
 
 let recorder = install_recorder(env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
 
@@ -23,7 +23,7 @@ let config = TransportConfig {
 };
 
 // send metrics manually
-let response = send_metrics(&config, recorder.to_json().as_bytes())?;
+let response = send_metrics(&config, recorder.to_json(Duration::from_secs(600).into()).as_bytes())?;
 
 // send metrics every 15 seconds
 send_metrics_with_interval(config, Duration::from_secs(15), recorder);

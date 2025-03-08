@@ -1,7 +1,10 @@
 [package]
-name = "otlp-metrics"
+name = "otlp-metrics-exporter"
 version = "0.1.0"
 edition = "2021"
+description = "Simple/no dependency opentelemetry metrics exporter as json for metrics crate"
+license-file = "LICENSE"
+repository = "https://github.com/songokas/otlp-metrics-exporter"
 
 [dependencies]
 json = "0.12"

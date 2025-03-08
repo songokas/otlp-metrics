@@ -23,8 +23,8 @@ pub struct TransportConfig {
 ///
 /// ```rust
 /// use std::time::Duration;
-/// use otlp_metrics::install_recorder;
-/// use otlp_metrics::transport::{TransportConfig, send_metrics};
+/// use otlp_metrics_exporter::install_recorder;
+/// use otlp_metrics_exporter::transport::{TransportConfig, send_metrics};
 /// use metrics::{counter, gauge, histogram};
 ///
 /// let recorder = install_recorder(env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"), "instance1");
@@ -74,8 +74,8 @@ pub fn send_metrics(config: &TransportConfig, metrics: &[u8]) -> Result<Vec<u8>>
 ///
 /// ```rust
 /// use std::time::Duration;
-/// use otlp_metrics::install_recorder;
-/// use otlp_metrics::transport::{TransportConfig, send_metrics_with_interval};
+/// use otlp_metrics_exporter::install_recorder;
+/// use otlp_metrics_exporter::transport::{TransportConfig, send_metrics_with_interval};
 /// use metrics::{counter, gauge, histogram};
 ///
 /// let recorder = install_recorder(env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"), "instance1");
@@ -95,7 +95,7 @@ pub fn send_metrics_with_interval(
 ) -> JoinHandle<()> {
     spawn(move || loop {
         sleep(interval);
-        if let Err(e) = send_metrics(&config, recorder.to_json(None).as_bytes()) {
+        if let Err(e) = send_metrics(&config, recorder.to_json(interval.into()).as_bytes()) {
             error!("Error sending metrics {e}");
         }
     })

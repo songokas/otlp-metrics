@@ -14,14 +14,14 @@ pub mod transport;
 /// # Example
 ///
 /// ```rust
-/// use otlp_metrics::install_recorder;
+/// use otlp_metrics_exporter::install_recorder;
 /// use metrics::{counter, gauge, histogram};
 ///
 /// let recorder = install_recorder(env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"), "instance1");
 /// counter!("test_counter", "label1" => "label_value1").increment(1);
 /// gauge!("test_gauge", "label2" => "label_value2").set(10);
 /// histogram!("test_histogram", "label3" => "label_value3").record(10);
-/// recorder.to_json();
+/// recorder.to_json(None);
 /// ```
 pub fn install_recorder(
     name: impl ToString,
